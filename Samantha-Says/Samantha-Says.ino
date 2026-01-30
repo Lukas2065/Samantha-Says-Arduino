@@ -8,7 +8,10 @@
 #define BLUE_SWITCH 8
 #define YELLOW_SWITCH 9
 
-enum {start_game, random_LED, wait_for_response} current_state;
+enum {start_game, random_LED, play_sequence, wait_for_response} current_state;
+int samantha_sequence[50];
+int user_sequence[50];
+int index;
 
 void setup() {
   Serial.begin(9600);
@@ -23,7 +26,9 @@ void setup() {
   pinMode(BLUE_SWITCH, INPUT_PULLUP);
   pinMode(YELLOW_SWITCH, INPUT_PULLUP);
 
+  randomSeed(analogRead(0));
   current_state = start_game;
+  index = 0;
   
 }
 
@@ -34,7 +39,12 @@ void loop() {
       current_state = random_LED;
       break;
     case random_LED:
-      light_up_random_led();
+      add_to_samantha_sequence(samantha_sequence, index); 
+      index++;
+      current_state = play_sequence;
+      break;
+    case play_sequence:
+      play_led_sequence(samantha_sequence, index);
       current_state = wait_for_response;
       break;
     case wait_for_response:
@@ -46,30 +56,46 @@ void loop() {
 
 }
 
-void light_up_random_led() {
-  int random_num = random(0,4);
-  Serial.println(random_num);
+void play_led_sequence(int samantha_sequence[], int current_index) {
+  int current_led;
+  for(int i=0; i<current_index; i++) {
+    current_led = samantha_sequence[i];
+    light_up_random_led(current_led);
+  }
+}
 
-  switch (random_num) {
+void add_to_samantha_sequence(int samantha_sequence[], int current_index) {
+  int random_num = random(0,4);
+  samantha_sequence[current_index] = random_num;
+
+  return random_num;
+}
+
+void light_up_random_led(int led_num) {
+  switch (led_num) {
     case 0:
       digitalWrite(RED_LED, HIGH);
       delay(200);
       all_led_states(false);
+      delay(200);
       break;
     case 1:
       digitalWrite(GREEN_LED, HIGH);
       delay(200);
       all_led_states(false);
+      delay(200);
       break;
     case 2:
       digitalWrite(BLUE_LED, HIGH);
       delay(200);
       all_led_states(false);
+      delay(200);
       break;
     case 3:
       digitalWrite(YELLOW_LED, HIGH);
       delay(200);
       all_led_states(false);
+      delay(200);
       break;
   }
 }
