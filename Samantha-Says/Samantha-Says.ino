@@ -8,11 +8,11 @@
 #define BLUE_SWITCH 8
 #define YELLOW_SWITCH 9
 
-enum {start_game, random_LED, play_sequence, wait_for_response, game_fail} current_state;
+enum {start_game, random_LED, play_sequence, wait_for_response, game_fail, game_success} current_state;
 int samantha_sequence[50];
 int user_sequence[50];
 int index;
-int user_choice;
+bool is_getting_response;
 
 void setup() {
   Serial.begin(9600);
@@ -30,7 +30,6 @@ void setup() {
   randomSeed(analogRead(0));
   current_state = start_game;
   index = 0;
-
 }
 
 void loop() {
@@ -49,11 +48,13 @@ void loop() {
       current_state = wait_for_response;
       break;
     case wait_for_response:
-      user_choice = light_led_with_switch();
-      if (user_choice != -1) {
-        delay(400);
-        current_state = random_LED;
+      if(!is_getting_response) {
+        handle_player_response(0);
       }
+      break;
+    case game_success:
+      play_success();
+      current_state = random_LED;
       break;
     case game_fail:
       play_fail();
@@ -61,26 +62,38 @@ void loop() {
       current_state = start_game;
       break;
   }
-
 }
 
-void play_fail() {
-  digitalWrite(RED_LED, HIGH);
-  delay(100);
-  digitalWrite(RED_LED, LOW);
-  delay(100);
-  digitalWrite(RED_LED, HIGH);
-  delay(100);
-  digitalWrite(RED_LED, LOW);
-  delay(100);
-  digitalWrite(RED_LED, HIGH);
-  delay(100);
-  digitalWrite(RED_LED, LOW);
-  delay(100);
+void handle_player_response(int player_index) {
+  Serial.println(player_index);
+  Serial.println(index);
+  if(player_index < index) {
+    Serial.println("play has more goes");
+    int user_choice = light_led_with_switch();
+      if (user_choice != -1) {
+        delay(400);
+        if(is_player_correct(user_choice, player_index)) {
+          Serial.println("Correct");
+          handle_player_response(player_index + 1);
+        }
+        else {
+          Serial.println("Incorrect");
+          current_state = game_fail;
+          return;
+        }
+        current_state = game_success;
+      } else {
+        handle_player_response(player_index);
+      }
+  } 
 }
 
-void check_player_response(int player_choice, int index) {
-  
+bool is_player_correct(int player_choice, int index) {
+  if(player_choice == samantha_sequence[index]) {
+    return true;
+  } else {
+    return false;
+  }
 }
 
 void play_led_sequence(int samantha_sequence[], int current_index) {
@@ -285,4 +298,38 @@ void all_led_states(bool isOn) {
     digitalWrite(BLUE_LED, LOW);
     digitalWrite(YELLOW_LED, LOW);
   }
+}
+
+void play_success() {
+  digitalWrite(GREEN_LED, HIGH);
+  delay(100);
+  digitalWrite(GREEN_LED, LOW);
+  delay(100);
+  digitalWrite(GREEN_LED, HIGH);
+  delay(100);
+  digitalWrite(GREEN_LED, LOW);
+  delay(100);
+  digitalWrite(GREEN_LED, HIGH);
+  delay(100);
+  digitalWrite(GREEN_LED, LOW);
+  delay(300);
+  all_led_states(true);
+  delay(300);
+  all_led_states(false);
+  delay(200);
+}
+
+void play_fail() {
+  digitalWrite(RED_LED, HIGH);
+  delay(100);
+  digitalWrite(RED_LED, LOW);
+  delay(100);
+  digitalWrite(RED_LED, HIGH);
+  delay(100);
+  digitalWrite(RED_LED, LOW);
+  delay(100);
+  digitalWrite(RED_LED, HIGH);
+  delay(100);
+  digitalWrite(RED_LED, LOW);
+  delay(100);
 }
