@@ -48,7 +48,7 @@ void loop() {
       current_state = wait_for_response;
       break;
     case wait_for_response:
-      if(!is_getting_response) {
+      if (!is_getting_response) {
         handle_player_response(0);
       }
       break;
@@ -65,31 +65,29 @@ void loop() {
 }
 
 void handle_player_response(int player_index) {
-  Serial.println(player_index);
-  Serial.println(index);
-  if(player_index < index) {
-    Serial.println("play has more goes");
+  if (player_index < index) {
     int user_choice = light_led_with_switch();
-      if (user_choice != -1) {
-        delay(400);
-        if(is_player_correct(user_choice, player_index)) {
-          Serial.println("Correct");
-          handle_player_response(player_index + 1);
-        }
-        else {
-          Serial.println("Incorrect");
-          current_state = game_fail;
-          return;
-        }
-        current_state = game_success;
-      } else {
-        handle_player_response(player_index);
+    if (user_choice != -1) {
+      delay(400);
+      if (is_player_correct(user_choice, player_index)) {
+        Serial.println("Correct");
+        handle_player_response(player_index + 1);
       }
-  } 
+      else {
+        Serial.println("Incorrect");
+        current_state = game_fail;
+      }
+      if (current_state != game_fail) {
+        current_state = game_success;
+      }
+    } else {
+      handle_player_response(player_index);
+    }
+  }
 }
 
 bool is_player_correct(int player_choice, int index) {
-  if(player_choice == samantha_sequence[index]) {
+  if (player_choice == samantha_sequence[index]) {
     return true;
   } else {
     return false;
